@@ -5,6 +5,30 @@
  */
 package org.paulvargas.tools.regex;
 
+import java.awt.BorderLayout;
+import java.awt.Dimension;
+import java.awt.FlowLayout;
+import java.awt.GridLayout;
+import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
+import java.util.regex.Pattern;
+import javax.swing.BorderFactory;
+import javax.swing.BoxLayout;
+import javax.swing.ButtonGroup;
+import javax.swing.GroupLayout;
+import javax.swing.JCheckBox;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JSplitPane;
+import javax.swing.JTabbedPane;
+import javax.swing.JTextArea;
+import javax.swing.JTextField;
+import javax.swing.LayoutStyle;
+import javax.swing.OverlayLayout;
+import javax.swing.WindowConstants;
+import sun.java2d.windows.WindowsFlags;
+
 /**
  *
  * @author pvargasbext
@@ -16,6 +40,7 @@ public class MainFrame extends javax.swing.JFrame {
 	 */
 	public MainFrame() {
 		initComponents();
+		initFlags();
 	}
 
 	/**
@@ -27,10 +52,127 @@ public class MainFrame extends javax.swing.JFrame {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
+        buttonGroup = new ButtonGroup();
+        regexPanel = new JPanel();
+        regexLabel = new JLabel();
+        regexTextField = new JTextField();
+        mainPanel = new JPanel();
+        flagsPanel = new JPanel();
+        splitPane = new JSplitPane();
+        inputScrollPane = new JScrollPane();
+        inputTextArea = new JTextArea();
+        tabbedPane = new JTabbedPane();
+        groupsPanel = new JPanel();
+        splitPanel = new JPanel();
+        replacePanel = new JPanel();
+        snippetPanel = new JPanel();
 
-        pack();
+        setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
+        setTitle("Java REGEX");
+
+        regexLabel.setText("Regex: ");
+
+        GroupLayout regexPanelLayout = new GroupLayout(regexPanel);
+        regexPanel.setLayout(regexPanelLayout);
+        regexPanelLayout.setHorizontalGroup(regexPanelLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
+            .addGroup(regexPanelLayout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(regexLabel)
+                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(regexTextField, GroupLayout.DEFAULT_SIZE, 503, Short.MAX_VALUE)
+                .addContainerGap())
+        );
+        regexPanelLayout.setVerticalGroup(regexPanelLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
+            .addGroup(regexPanelLayout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(regexPanelLayout.createParallelGroup(GroupLayout.Alignment.BASELINE)
+                    .addComponent(regexLabel)
+                    .addComponent(regexTextField, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE))
+                .addContainerGap(GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+        );
+
+        getContentPane().add(regexPanel, BorderLayout.PAGE_START);
+
+        mainPanel.setLayout(new BorderLayout());
+
+        flagsPanel.setBorder(BorderFactory.createTitledBorder("Flags"));
+        mainPanel.add(flagsPanel, BorderLayout.PAGE_START);
+
+        splitPane.setBorder(null);
+        splitPane.setOrientation(JSplitPane.VERTICAL_SPLIT);
+        splitPane.setResizeWeight(0.33);
+
+        inputScrollPane.setBorder(BorderFactory.createTitledBorder("Input"));
+
+        inputTextArea.setColumns(20);
+        inputScrollPane.setViewportView(inputTextArea);
+
+        splitPane.setLeftComponent(inputScrollPane);
+
+        GroupLayout groupsPanelLayout = new GroupLayout(groupsPanel);
+        groupsPanel.setLayout(groupsPanelLayout);
+        groupsPanelLayout.setHorizontalGroup(groupsPanelLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
+            .addGap(0, 560, Short.MAX_VALUE)
+        );
+        groupsPanelLayout.setVerticalGroup(groupsPanelLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
+            .addGap(0, 109, Short.MAX_VALUE)
+        );
+
+        tabbedPane.addTab("Matched Subsequences", groupsPanel);
+
+        GroupLayout splitPanelLayout = new GroupLayout(splitPanel);
+        splitPanel.setLayout(splitPanelLayout);
+        splitPanelLayout.setHorizontalGroup(splitPanelLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
+            .addGap(0, 560, Short.MAX_VALUE)
+        );
+        splitPanelLayout.setVerticalGroup(splitPanelLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
+            .addGap(0, 109, Short.MAX_VALUE)
+        );
+
+        tabbedPane.addTab("Split", splitPanel);
+
+        GroupLayout replacePanelLayout = new GroupLayout(replacePanel);
+        replacePanel.setLayout(replacePanelLayout);
+        replacePanelLayout.setHorizontalGroup(replacePanelLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
+            .addGap(0, 560, Short.MAX_VALUE)
+        );
+        replacePanelLayout.setVerticalGroup(replacePanelLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
+            .addGap(0, 109, Short.MAX_VALUE)
+        );
+
+        tabbedPane.addTab("Replace", replacePanel);
+
+        GroupLayout snippetPanelLayout = new GroupLayout(snippetPanel);
+        snippetPanel.setLayout(snippetPanelLayout);
+        snippetPanelLayout.setHorizontalGroup(snippetPanelLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
+            .addGap(0, 560, Short.MAX_VALUE)
+        );
+        snippetPanelLayout.setVerticalGroup(snippetPanelLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
+            .addGap(0, 109, Short.MAX_VALUE)
+        );
+
+        tabbedPane.addTab("Snippet", snippetPanel);
+
+        splitPane.setRightComponent(tabbedPane);
+
+        mainPanel.add(splitPane, BorderLayout.CENTER);
+
+        getContentPane().add(mainPanel, BorderLayout.CENTER);
+
+        setSize(new Dimension(581, 481));
+        setLocationRelativeTo(null);
     }// </editor-fold>//GEN-END:initComponents
+
+	private void initFlags() {
+		flagsPanel.setLayout(new WrapLayout(FlowLayout.LEFT));
+		for (Field field : Pattern.class.getDeclaredFields()) {
+			int modifiers = field.getModifiers();
+			if (Modifier.isPublic(modifiers) && Modifier.isFinal(modifiers)) {
+				JCheckBox checkBox = new JCheckBox(field.getName());
+				flagsPanel.add(checkBox);
+			}
+		}
+	}
 
 	/**
 	 * @param args the command line arguments
@@ -43,7 +185,7 @@ public class MainFrame extends javax.swing.JFrame {
 		 */
 		try {
 			for (javax.swing.UIManager.LookAndFeelInfo info : javax.swing.UIManager.getInstalledLookAndFeels()) {
-				if ("Nimbus".equals(info.getName())) {
+				if ("Windows".equals(info.getName())) {
 					javax.swing.UIManager.setLookAndFeel(info.getClassName());
 					break;
 				}
@@ -68,5 +210,21 @@ public class MainFrame extends javax.swing.JFrame {
 	}
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private ButtonGroup buttonGroup;
+    private JPanel flagsPanel;
+    private JPanel groupsPanel;
+    private JScrollPane inputScrollPane;
+    private JTextArea inputTextArea;
+    private JPanel mainPanel;
+    private JLabel regexLabel;
+    private JPanel regexPanel;
+    private JTextField regexTextField;
+    private JPanel replacePanel;
+    private JPanel snippetPanel;
+    private JSplitPane splitPane;
+    private JPanel splitPanel;
+    private JTabbedPane tabbedPane;
     // End of variables declaration//GEN-END:variables
+
+
 }
