@@ -13,7 +13,6 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.regex.Pattern;
 import javax.swing.BorderFactory;
-import javax.swing.BoxLayout;
 import javax.swing.ButtonGroup;
 import javax.swing.GroupLayout;
 import javax.swing.JCheckBox;
@@ -22,12 +21,12 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
 import javax.swing.JTabbedPane;
+import javax.swing.JTable;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import javax.swing.LayoutStyle;
-import javax.swing.OverlayLayout;
 import javax.swing.WindowConstants;
-import sun.java2d.windows.WindowsFlags;
+import javax.swing.table.DefaultTableModel;
 
 /**
  *
@@ -35,10 +34,15 @@ import sun.java2d.windows.WindowsFlags;
  */
 public class MainFrame extends javax.swing.JFrame {
 
+  private final DefaultTableModel groupModel;
+  private final DefaultTableModel splitModel;
+	
 	/**
 	 * Creates new form MainFrame
 	 */
 	public MainFrame() {
+		this.splitModel = new DefaultTableModel();
+		this.groupModel = new DefaultTableModel();
 		initComponents();
 		initFlags();
 	}
@@ -63,6 +67,8 @@ public class MainFrame extends javax.swing.JFrame {
         inputTextArea = new JTextArea();
         tabbedPane = new JTabbedPane();
         groupsPanel = new JPanel();
+        groupsScrollPane = new JScrollPane();
+        groupsTable = new JTable();
         splitPanel = new JPanel();
         replacePanel = new JPanel();
         snippetPanel = new JPanel();
@@ -109,14 +115,12 @@ public class MainFrame extends javax.swing.JFrame {
 
         splitPane.setLeftComponent(inputScrollPane);
 
-        GroupLayout groupsPanelLayout = new GroupLayout(groupsPanel);
-        groupsPanel.setLayout(groupsPanelLayout);
-        groupsPanelLayout.setHorizontalGroup(groupsPanelLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
-            .addGap(0, 560, Short.MAX_VALUE)
-        );
-        groupsPanelLayout.setVerticalGroup(groupsPanelLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
-            .addGap(0, 109, Short.MAX_VALUE)
-        );
+        groupsPanel.setLayout(new GridLayout());
+
+        groupsTable.setModel(groupModel);
+        groupsScrollPane.setViewportView(groupsTable);
+
+        groupsPanel.add(groupsScrollPane);
 
         tabbedPane.addTab("Matched Subsequences", groupsPanel);
 
@@ -213,6 +217,8 @@ public class MainFrame extends javax.swing.JFrame {
     private ButtonGroup buttonGroup;
     private JPanel flagsPanel;
     private JPanel groupsPanel;
+    private JScrollPane groupsScrollPane;
+    private JTable groupsTable;
     private JScrollPane inputScrollPane;
     private JTextArea inputTextArea;
     private JPanel mainPanel;
