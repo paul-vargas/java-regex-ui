@@ -45,8 +45,9 @@ public class MainFrame extends javax.swing.JFrame {
 
   private DefaultTableModel groupModel;
   private DefaultTableModel splitModel;
-  private DocumentListenerAdapter regexDocumentListener;
-  private DocumentListenerAdapter inputDocumentListener;
+  
+  private int flags = 0;
+  private Pattern pattern = Pattern.compile("", flags);
 	
 	/**
 	 * Creates new form MainFrame
@@ -55,37 +56,7 @@ public class MainFrame extends javax.swing.JFrame {
 		initTableModels();
 		initComponents();
 		initFlags();
-		regexTextField.getDocument().addDocumentListener(new DocumentListener() {
-			@Override
-			public void insertUpdate(DocumentEvent e) {
-				try {
-					Document doc = e.getDocument();
-					System.out.println("insertUpdate: " + doc.getText(0, doc.getLength()));
-				} catch (BadLocationException ex) {
-					Logger.getLogger(MainFrame.class.getName()).log(Level.SEVERE, null, ex);
-				}
-			}
-
-			@Override
-			public void removeUpdate(DocumentEvent e) {
-				try {
-					Document doc = e.getDocument();
-					System.out.println("removeUpdate: " + doc.getText(0, doc.getLength()));
-				} catch (BadLocationException ex) {
-					Logger.getLogger(MainFrame.class.getName()).log(Level.SEVERE, null, ex);
-				}
-			}
-
-			@Override
-			public void changedUpdate(DocumentEvent e) {
-				try {
-					Document doc = e.getDocument();
-					System.out.println("changedUpdate: " + doc.getText(0, doc.getLength()));
-				} catch (BadLocationException ex) {
-					Logger.getLogger(MainFrame.class.getName()).log(Level.SEVERE, null, ex);
-				}
-			}
-		});
+        initDocumentListeners();
 	}
 
 	/**
@@ -252,6 +223,29 @@ public class MainFrame extends javax.swing.JFrame {
 			}
 		}
 	}
+    
+    private void initDocumentListeners() {
+        regexTextField.getDocument().addDocumentListener(new DocumentListenerAdapter() {
+            @Override
+            public void update(String text) {
+                compileRegex();
+            }
+        });
+        inputTextArea.getDocument().addDocumentListener(new DocumentListenerAdapter() {
+            @Override
+            public void update(String text) {
+                
+            }
+        });
+    }
+    
+    private void compileRegex() {
+        try {
+            pattern = Pattern.compile(regexTextField.getText(), flags);
+        } catch (Exception e) {
+            
+        }
+    }
 
 	/**
 	 * @param args the command line arguments
