@@ -13,6 +13,8 @@ import java.awt.event.InputMethodEvent;
 import java.awt.event.InputMethodListener;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.regex.Pattern;
 import javax.swing.BorderFactory;
 import javax.swing.ButtonGroup;
@@ -32,6 +34,8 @@ import javax.swing.WindowConstants;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.table.DefaultTableModel;
+import javax.swing.text.BadLocationException;
+import javax.swing.text.Document;
 
 /**
  *
@@ -41,6 +45,8 @@ public class MainFrame extends javax.swing.JFrame {
 
   private DefaultTableModel groupModel;
   private DefaultTableModel splitModel;
+  private DocumentListenerAdapter regexDocumentListener;
+  private DocumentListenerAdapter inputDocumentListener;
 	
 	/**
 	 * Creates new form MainFrame
@@ -52,17 +58,32 @@ public class MainFrame extends javax.swing.JFrame {
 		regexTextField.getDocument().addDocumentListener(new DocumentListener() {
 			@Override
 			public void insertUpdate(DocumentEvent e) {
-				System.out.println("insertUpdate: " + e);
+				try {
+					Document doc = e.getDocument();
+					System.out.println("insertUpdate: " + doc.getText(0, doc.getLength()));
+				} catch (BadLocationException ex) {
+					Logger.getLogger(MainFrame.class.getName()).log(Level.SEVERE, null, ex);
+				}
 			}
 
 			@Override
 			public void removeUpdate(DocumentEvent e) {
-				System.out.println("removeUpdate: " + e);
+				try {
+					Document doc = e.getDocument();
+					System.out.println("removeUpdate: " + doc.getText(0, doc.getLength()));
+				} catch (BadLocationException ex) {
+					Logger.getLogger(MainFrame.class.getName()).log(Level.SEVERE, null, ex);
+				}
 			}
 
 			@Override
 			public void changedUpdate(DocumentEvent e) {
-				System.out.println("changedUpdate: " + e);
+				try {
+					Document doc = e.getDocument();
+					System.out.println("changedUpdate: " + doc.getText(0, doc.getLength()));
+				} catch (BadLocationException ex) {
+					Logger.getLogger(MainFrame.class.getName()).log(Level.SEVERE, null, ex);
+				}
 			}
 		});
 	}
