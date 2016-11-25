@@ -9,6 +9,8 @@ import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.GridLayout;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.InputMethodEvent;
 import java.awt.event.InputMethodListener;
 import java.lang.reflect.Field;
@@ -219,9 +221,26 @@ public class MainFrame extends javax.swing.JFrame {
 			int modifiers = field.getModifiers();
 			if (Modifier.isPublic(modifiers) && Modifier.isFinal(modifiers)) {
 				JCheckBox checkBox = new JCheckBox(field.getName());
+				checkBox.addActionListener(new ActionListener() {
+					@Override
+					public void actionPerformed(ActionEvent e) {
+						JCheckBox src = (JCheckBox) e.getSource();
+						MainFrame.this.flags |= getValue(src.getText());
+						System.out.println(Integer.toBinaryString(flags));
+					}
+				});
 				flagsPanel.add(checkBox);
 			}
 		}
+	}
+	
+	private static final int getValue(String fieldName) {
+		try {
+			return Pattern.class.getField(fieldName).getInt(null);
+		} catch (NoSuchFieldException | SecurityException | IllegalArgumentException | IllegalAccessException ex) {
+			Logger.getLogger(App.class.getName()).log(Level.SEVERE, null, ex);
+		}
+		return 0;
 	}
     
     private void initDocumentListeners() {
