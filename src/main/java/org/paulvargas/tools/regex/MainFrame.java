@@ -13,6 +13,10 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.InputMethodEvent;
 import java.awt.event.InputMethodListener;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.logging.Level;
@@ -89,8 +93,11 @@ public class MainFrame extends javax.swing.JFrame {
         replacePanel = new JPanel();
         snippetPanel = new JPanel();
 
+        FormListener formListener = new FormListener();
+
         setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
         setTitle("Java REGEX");
+        addPropertyChangeListener(formListener);
 
         regexLabel.setText("Regex: ");
 
@@ -202,7 +209,22 @@ public class MainFrame extends javax.swing.JFrame {
 
         setSize(new Dimension(513, 542));
         setLocationRelativeTo(null);
+    }
+
+    // Code for dispatching events from components to event handlers.
+
+    private class FormListener implements PropertyChangeListener {
+        FormListener() {}
+        public void propertyChange(PropertyChangeEvent evt) {
+            if (evt.getSource() == MainFrame.this) {
+                MainFrame.this.formPropertyChange(evt);
+            }
+        }
     }// </editor-fold>//GEN-END:initComponents
+
+    private void formPropertyChange(PropertyChangeEvent evt) {//GEN-FIRST:event_formPropertyChange
+        System.out.println(evt);
+    }//GEN-LAST:event_formPropertyChange
 
 	private void initTableModels() {
 		groupModel = new DefaultTableModel();
@@ -221,13 +243,17 @@ public class MainFrame extends javax.swing.JFrame {
 			int modifiers = field.getModifiers();
 			if (Modifier.isPublic(modifiers) && Modifier.isFinal(modifiers)) {
 				JCheckBox checkBox = new JCheckBox(field.getName());
-				checkBox.addActionListener(new ActionListener() {
-					@Override
-					public void actionPerformed(ActionEvent e) {
-						JCheckBox src = (JCheckBox) e.getSource();
-						MainFrame.this.flags |= getValue(src.getText());
-						System.out.println(Integer.toBinaryString(flags));
+				checkBox.addItemListener((ItemEvent evt) -> {
+					JCheckBox src = (JCheckBox) evt.getSource();
+					switch(evt.getStateChange()) {
+						case ItemEvent.SELECTED:
+							flags |= getValue(src.getText());
+							break;
+						default:
+							flags &= ~getValue(src.getText());
+							break;
 					}
+					firePropertyChange("flags", null, null);
 				});
 				flagsPanel.add(checkBox);
 			}
@@ -247,13 +273,13 @@ public class MainFrame extends javax.swing.JFrame {
         regexTextField.getDocument().addDocumentListener(new DocumentListenerAdapter() {
             @Override
             public void update(String text) {
-                compileRegex();
+				firePropertyChange("regex", null, text);
             }
         });
         inputTextArea.getDocument().addDocumentListener(new DocumentListenerAdapter() {
             @Override
             public void update(String text) {
-                
+                firePropertyChange("input", null, text);
             }
         });
     }
@@ -261,6 +287,7 @@ public class MainFrame extends javax.swing.JFrame {
     private void compileRegex() {
         try {
             pattern = Pattern.compile(regexTextField.getText(), flags);
+			firePropertyChange("pattern", null, null);
         } catch (Exception e) {
             
         }
