@@ -19,8 +19,11 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import javax.swing.BorderFactory;
 import javax.swing.ButtonGroup;
@@ -29,6 +32,7 @@ import javax.swing.JCheckBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
+import javax.swing.JSpinner;
 import javax.swing.JSplitPane;
 import javax.swing.JTabbedPane;
 import javax.swing.JTable;
@@ -36,7 +40,10 @@ import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import javax.swing.LayoutStyle;
 import javax.swing.ListSelectionModel;
+import javax.swing.SpinnerNumberModel;
 import javax.swing.WindowConstants;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.table.DefaultTableModel;
@@ -90,6 +97,8 @@ public class MainFrame extends javax.swing.JFrame {
         splitPanel = new JPanel();
         splitScrollPane = new JScrollPane();
         splitTable = new JTable();
+        limitLabel = new JLabel();
+        limitSpinner = new JSpinner();
         replacePanel = new JPanel();
         snippetPanel = new JPanel();
 
@@ -139,7 +148,7 @@ public class MainFrame extends javax.swing.JFrame {
         splitPane.setLeftComponent(inputScrollPane);
 
         groupsTable.setModel(groupModel);
-        groupsTable.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
+        groupsTable.setCellSelectionEnabled(true);
         groupsScrollPane.setViewportView(groupsTable);
 
         GroupLayout groupsPanelLayout = new GroupLayout(groupsPanel);
@@ -160,20 +169,36 @@ public class MainFrame extends javax.swing.JFrame {
         tabbedPane.addTab("Matched Subsequences", groupsPanel);
 
         splitTable.setModel(splitModel);
+        splitTable.setCellSelectionEnabled(true);
         splitScrollPane.setViewportView(splitTable);
+
+        limitLabel.setText("Limit: ");
+
+        limitSpinner.setModel(new SpinnerNumberModel(0, -1, 2147483647, 1));
+        limitSpinner.addChangeListener(formListener);
 
         GroupLayout splitPanelLayout = new GroupLayout(splitPanel);
         splitPanel.setLayout(splitPanelLayout);
         splitPanelLayout.setHorizontalGroup(splitPanelLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
             .addGroup(splitPanelLayout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(splitScrollPane, GroupLayout.DEFAULT_SIZE, 472, Short.MAX_VALUE)
+                .addGroup(splitPanelLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                    .addComponent(splitScrollPane, GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
+                    .addGroup(splitPanelLayout.createSequentialGroup()
+                        .addComponent(limitLabel)
+                        .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(limitSpinner, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
+                        .addGap(0, 0, Short.MAX_VALUE)))
                 .addContainerGap())
         );
         splitPanelLayout.setVerticalGroup(splitPanelLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
-            .addGroup(splitPanelLayout.createSequentialGroup()
+            .addGroup(GroupLayout.Alignment.TRAILING, splitPanelLayout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(splitScrollPane, GroupLayout.DEFAULT_SIZE, 261, Short.MAX_VALUE)
+                .addGroup(splitPanelLayout.createParallelGroup(GroupLayout.Alignment.BASELINE)
+                    .addComponent(limitLabel)
+                    .addComponent(limitSpinner, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(splitScrollPane, GroupLayout.DEFAULT_SIZE, 281, Short.MAX_VALUE)
                 .addContainerGap())
         );
 
@@ -213,18 +238,49 @@ public class MainFrame extends javax.swing.JFrame {
 
     // Code for dispatching events from components to event handlers.
 
-    private class FormListener implements PropertyChangeListener {
+    private class FormListener implements PropertyChangeListener, ChangeListener {
         FormListener() {}
         public void propertyChange(PropertyChangeEvent evt) {
             if (evt.getSource() == MainFrame.this) {
                 MainFrame.this.formPropertyChange(evt);
             }
         }
+
+        public void stateChanged(ChangeEvent evt) {
+            if (evt.getSource() == limitSpinner) {
+                MainFrame.this.limitSpinnerStateChanged(evt);
+            }
+        }
     }// </editor-fold>//GEN-END:initComponents
 
     private void formPropertyChange(PropertyChangeEvent evt) {//GEN-FIRST:event_formPropertyChange
         System.out.println(evt);
+		String propertyName = evt.getPropertyName();
+		switch (propertyName) {
+			case "regex":
+			case "flags":
+				compileRegex((String) evt.getNewValue());
+				break;
+			case "input":
+				updateGroups();
+				updateSplit();
+				break;
+			case "pattern":
+				updateGroups();
+				updateSplit();
+				break;
+			case "limit":
+				updateSplit((Integer) limitSpinner.getValue());
+				break;
+			case "":
+				break;
+			default:
+		}
     }//GEN-LAST:event_formPropertyChange
+
+    private void limitSpinnerStateChanged(ChangeEvent evt) {//GEN-FIRST:event_limitSpinnerStateChanged
+		firePropertyChange("limit", null, limitSpinner.getValue());
+    }//GEN-LAST:event_limitSpinnerStateChanged
 
 	private void initTableModels() {
 		groupModel = new DefaultTableModel();
@@ -253,7 +309,7 @@ public class MainFrame extends javax.swing.JFrame {
 							flags &= ~getValue(src.getText());
 							break;
 					}
-					firePropertyChange("flags", null, null);
+					firePropertyChange("flags", null, regexTextField.getText());
 				});
 				flagsPanel.add(checkBox);
 			}
@@ -284,14 +340,51 @@ public class MainFrame extends javax.swing.JFrame {
         });
     }
     
-    private void compileRegex() {
+    private void compileRegex(String regex) {
         try {
-            pattern = Pattern.compile(regexTextField.getText(), flags);
+            pattern = Pattern.compile(regex, flags);
 			firePropertyChange("pattern", null, null);
         } catch (Exception e) {
-            
+            e.printStackTrace();
         }
     }
+	
+	private void updateGroups() {
+		if (pattern != null) {
+			groupModel.setRowCount(0);
+			Matcher matcher = pattern.matcher(inputTextArea.getText());
+			for (int n = 1; matcher.find(); n++) {
+				String group = matcher.group();
+				groupModel.addRow(new Object[]{
+					Integer.valueOf(n),
+					Integer.valueOf(matcher.start()),
+					Integer.valueOf(matcher.end()), group.isEmpty() ? "<empty>" : group == null ? "<null>" : group});
+			}
+		}
+	}
+
+	private void updateSplit() {
+		updateSplit((Integer) limitSpinner.getValue());
+	}
+
+	private void updateSplit(int limit) {
+		splitModel.setRowCount(0);
+		String[] array = pattern.split(inputTextArea.getText(), limit);
+		for (int index = 0; index < array.length; index++) {
+			List<String> rowData = new ArrayList<>(4);
+			rowData.add(String.valueOf(index));
+			String value = array[index];
+			if (value == null) {
+				rowData.add("<null>");
+			} else if (value.isEmpty()) {
+				rowData.add("<empty>");
+			} else {
+				rowData.add(value);
+			}
+			splitModel.addRow(rowData.toArray());
+		}
+		//resizeColumnWidth(splitTable);
+	}
 
 	/**
 	 * @param args the command line arguments
@@ -336,6 +429,8 @@ public class MainFrame extends javax.swing.JFrame {
     private JTable groupsTable;
     private JScrollPane inputScrollPane;
     private JTextArea inputTextArea;
+    private JLabel limitLabel;
+    private JSpinner limitSpinner;
     private JPanel mainPanel;
     private JLabel regexLabel;
     private JPanel regexPanel;
