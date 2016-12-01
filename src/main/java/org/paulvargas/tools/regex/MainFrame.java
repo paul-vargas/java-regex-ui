@@ -9,11 +9,7 @@ import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
-import java.awt.GridLayout;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.InputMethodEvent;
-import java.awt.event.InputMethodListener;
+import java.awt.Font;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.beans.PropertyChangeEvent;
@@ -26,6 +22,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
 import javax.swing.BorderFactory;
 import javax.swing.ButtonGroup;
 import javax.swing.GroupLayout;
@@ -41,16 +38,12 @@ import javax.swing.JTable;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import javax.swing.LayoutStyle;
-import javax.swing.ListSelectionModel;
 import javax.swing.SpinnerNumberModel;
 import javax.swing.WindowConstants;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
-import javax.swing.event.DocumentEvent;
-import javax.swing.event.DocumentListener;
 import javax.swing.table.DefaultTableModel;
-import javax.swing.text.BadLocationException;
-import javax.swing.text.Document;
+
 import tchrist.PatternUtils;
 
 /**
@@ -60,13 +53,13 @@ import tchrist.PatternUtils;
 public class MainFrame extends javax.swing.JFrame {
 
 	private static final Logger LOG = Logger.getLogger(MainFrame.class.getName());
-	
-  private DefaultTableModel groupModel;
-  private DefaultTableModel splitModel;
-  
-  private int flags = 0;
-  private Pattern pattern = Pattern.compile("", flags);
-	
+
+	private DefaultTableModel groupModel;
+	private DefaultTableModel splitModel;
+
+	private int flags = 0;
+	private Pattern pattern = Pattern.compile("", flags);
+
 	/**
 	 * Creates new form MainFrame
 	 */
@@ -122,6 +115,8 @@ public class MainFrame extends javax.swing.JFrame {
 
         regexLabel.setText("Regex: ");
 
+        regexTextField.setFont(new Font("Monospaced", 1, 12)); // NOI18N
+
         GroupLayout regexPanelLayout = new GroupLayout(regexPanel);
         regexPanel.setLayout(regexPanelLayout);
         regexPanelLayout.setHorizontalGroup(regexPanelLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
@@ -155,6 +150,7 @@ public class MainFrame extends javax.swing.JFrame {
         inputScrollPane.setBorder(BorderFactory.createTitledBorder("Input"));
 
         inputTextArea.setColumns(20);
+        inputTextArea.setFont(new Font("Monospaced", 0, 12)); // NOI18N
         inputScrollPane.setViewportView(inputTextArea);
 
         splitPane.setLeftComponent(inputScrollPane);
@@ -174,7 +170,7 @@ public class MainFrame extends javax.swing.JFrame {
         groupsPanelLayout.setVerticalGroup(groupsPanelLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
             .addGroup(groupsPanelLayout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(groupsScrollPane, GroupLayout.DEFAULT_SIZE, 352, Short.MAX_VALUE)
+                .addComponent(groupsScrollPane, GroupLayout.DEFAULT_SIZE, 356, Short.MAX_VALUE)
                 .addContainerGap())
         );
 
@@ -210,13 +206,15 @@ public class MainFrame extends javax.swing.JFrame {
                     .addComponent(limitLabel)
                     .addComponent(limitSpinner, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(splitScrollPane, GroupLayout.DEFAULT_SIZE, 326, Short.MAX_VALUE)
+                .addComponent(splitScrollPane, GroupLayout.DEFAULT_SIZE, 330, Short.MAX_VALUE)
                 .addContainerGap())
         );
 
         tabbedPane.addTab("Split", splitPanel);
 
         replacementLabel.setText("Replacement: ");
+
+        replacementTextField.setFont(new Font("Monospaced", 0, 12)); // NOI18N
 
         buttonGroup.add(replaceFirstRadioButton);
         replaceFirstRadioButton.setText("Replace First");
@@ -230,6 +228,7 @@ public class MainFrame extends javax.swing.JFrame {
         unescapeJavaCheckBox.addItemListener(formListener);
 
         resultTextArea.setColumns(20);
+        resultTextArea.setFont(new Font("Monospaced", 0, 12)); // NOI18N
         resultTextArea.setRows(5);
         replaceResultScrollPane.setViewportView(resultTextArea);
 
@@ -277,7 +276,7 @@ public class MainFrame extends javax.swing.JFrame {
             .addGap(0, 462, Short.MAX_VALUE)
         );
         snippetPanelLayout.setVerticalGroup(snippetPanelLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
-            .addGap(0, 374, Short.MAX_VALUE)
+            .addGap(0, 378, Short.MAX_VALUE)
         );
 
         tabbedPane.addTab("Snippet", snippetPanel);
@@ -322,7 +321,9 @@ public class MainFrame extends javax.swing.JFrame {
     }// </editor-fold>//GEN-END:initComponents
 
     private void formPropertyChange(PropertyChangeEvent evt) {//GEN-FIRST:event_formPropertyChange
-        System.out.println(evt);
+		if (LOG.isLoggable(Level.CONFIG)) {
+			LOG.config("PropertyChangeEvent - " + evt); //$NON-NLS-1$
+		}
 		String propertyName = evt.getPropertyName();
 		switch (propertyName) {
 			case "regex":
@@ -342,6 +343,11 @@ public class MainFrame extends javax.swing.JFrame {
 				updateSplit((Integer) limitSpinner.getValue());
 				break;
 			case "replacement":
+				updateReplace((String) evt.getNewValue());
+				break;
+			case "replaceFirst":
+			case "replaceAll":
+			case "unescapeJava":
 				updateReplace();
 				break;
 			case "":
@@ -355,15 +361,15 @@ public class MainFrame extends javax.swing.JFrame {
     }//GEN-LAST:event_limitSpinnerStateChanged
 
     private void replaceFirstRadioButtonItemStateChanged(ItemEvent evt) {//GEN-FIRST:event_replaceFirstRadioButtonItemStateChanged
-        firePropertyChange("replacement", null, null);
+        firePropertyChange("replaceFirst", null, null);
     }//GEN-LAST:event_replaceFirstRadioButtonItemStateChanged
 
     private void replaceAllRadioButtonItemStateChanged(ItemEvent evt) {//GEN-FIRST:event_replaceAllRadioButtonItemStateChanged
-        firePropertyChange("replacement", null, null);
+        firePropertyChange("replaceAll", null, null);
     }//GEN-LAST:event_replaceAllRadioButtonItemStateChanged
 
     private void unescapeJavaCheckBoxItemStateChanged(ItemEvent evt) {//GEN-FIRST:event_unescapeJavaCheckBoxItemStateChanged
-        firePropertyChange("replacement", null, null);
+        firePropertyChange("unescapeJava", null, null);
     }//GEN-LAST:event_unescapeJavaCheckBoxItemStateChanged
 
 	private void initTableModels() {
@@ -430,14 +436,18 @@ public class MainFrame extends javax.swing.JFrame {
         });
     }
     
-    private void compileRegex(String regex) {
-        try {
-            pattern = Pattern.compile(regex, flags);
+	private void compileRegex(String regex) {
+		try {
+			pattern = Pattern.compile(regex, flags);
+			regexTextField.setForeground(new Color(0, 0, 153));
+			regexTextField.setBackground(Color.WHITE);
 			firePropertyChange("pattern", null, null);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
+		} catch (Exception e) {
+			LOG.log(Level.SEVERE, "Error compiling regex", e);
+			regexTextField.setForeground(Color.RED);
+			regexTextField.setBackground(new Color(255, 230, 230));
+		}
+	}
 	
 	private void updateGroups() {
 		if (pattern != null) {
@@ -477,7 +487,10 @@ public class MainFrame extends javax.swing.JFrame {
 	}
 
 	private void updateReplace() {
-		String replacement = replacementTextField.getText();
+		updateReplace(replacementTextField.getText());
+	}
+
+	private void updateReplace(String replacement) {
 		if (unescapeJavaCheckBox.isSelected()) {
 			replacement = PatternUtils.unescape_perl_string(replacement);
 		}
