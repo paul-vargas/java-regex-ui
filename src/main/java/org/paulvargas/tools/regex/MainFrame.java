@@ -6,6 +6,7 @@
 package org.paulvargas.tools.regex;
 
 import java.awt.BorderLayout;
+import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.GridLayout;
@@ -31,6 +32,7 @@ import javax.swing.GroupLayout;
 import javax.swing.JCheckBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.JRadioButton;
 import javax.swing.JScrollPane;
 import javax.swing.JSpinner;
 import javax.swing.JSplitPane;
@@ -49,6 +51,7 @@ import javax.swing.event.DocumentListener;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.Document;
+import tchrist.PatternUtils;
 
 /**
  *
@@ -56,6 +59,8 @@ import javax.swing.text.Document;
  */
 public class MainFrame extends javax.swing.JFrame {
 
+	private static final Logger LOG = Logger.getLogger(MainFrame.class.getName());
+	
   private DefaultTableModel groupModel;
   private DefaultTableModel splitModel;
   
@@ -82,25 +87,32 @@ public class MainFrame extends javax.swing.JFrame {
     private void initComponents() {
 
         buttonGroup = new ButtonGroup();
-        regexPanel = new JPanel();
-        regexLabel = new JLabel();
+        JPanel regexPanel = new JPanel();
+        JLabel regexLabel = new JLabel();
         regexTextField = new JTextField();
-        mainPanel = new JPanel();
+        JPanel mainPanel = new JPanel();
         flagsPanel = new JPanel();
-        splitPane = new JSplitPane();
-        inputScrollPane = new JScrollPane();
+        JSplitPane splitPane = new JSplitPane();
+        JScrollPane inputScrollPane = new JScrollPane();
         inputTextArea = new JTextArea();
-        tabbedPane = new JTabbedPane();
-        groupsPanel = new JPanel();
-        groupsScrollPane = new JScrollPane();
+        JTabbedPane tabbedPane = new JTabbedPane();
+        JPanel groupsPanel = new JPanel();
+        JScrollPane groupsScrollPane = new JScrollPane();
         groupsTable = new JTable();
-        splitPanel = new JPanel();
-        splitScrollPane = new JScrollPane();
+        JPanel splitPanel = new JPanel();
+        JScrollPane splitScrollPane = new JScrollPane();
         splitTable = new JTable();
-        limitLabel = new JLabel();
+        JLabel limitLabel = new JLabel();
         limitSpinner = new JSpinner();
-        replacePanel = new JPanel();
-        snippetPanel = new JPanel();
+        JPanel replacePanel = new JPanel();
+        JLabel replacementLabel = new JLabel();
+        replacementTextField = new JTextField();
+        replaceFirstRadioButton = new JRadioButton();
+        replaceAllRadioButton = new JRadioButton();
+        unescapeJavaCheckBox = new JCheckBox();
+        JScrollPane replaceResultScrollPane = new JScrollPane();
+        resultTextArea = new JTextArea();
+        JPanel snippetPanel = new JPanel();
 
         FormListener formListener = new FormListener();
 
@@ -117,7 +129,7 @@ public class MainFrame extends javax.swing.JFrame {
                 .addContainerGap()
                 .addComponent(regexLabel)
                 .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(regexTextField, GroupLayout.DEFAULT_SIZE, 435, Short.MAX_VALUE)
+                .addComponent(regexTextField, GroupLayout.DEFAULT_SIZE, 405, Short.MAX_VALUE)
                 .addContainerGap())
         );
         regexPanelLayout.setVerticalGroup(regexPanelLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
@@ -156,13 +168,13 @@ public class MainFrame extends javax.swing.JFrame {
         groupsPanelLayout.setHorizontalGroup(groupsPanelLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
             .addGroup(groupsPanelLayout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(groupsScrollPane, GroupLayout.DEFAULT_SIZE, 472, Short.MAX_VALUE)
+                .addComponent(groupsScrollPane, GroupLayout.DEFAULT_SIZE, 442, Short.MAX_VALUE)
                 .addContainerGap())
         );
         groupsPanelLayout.setVerticalGroup(groupsPanelLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
             .addGroup(groupsPanelLayout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(groupsScrollPane, GroupLayout.DEFAULT_SIZE, 261, Short.MAX_VALUE)
+                .addComponent(groupsScrollPane, GroupLayout.DEFAULT_SIZE, 352, Short.MAX_VALUE)
                 .addContainerGap())
         );
 
@@ -183,7 +195,7 @@ public class MainFrame extends javax.swing.JFrame {
             .addGroup(splitPanelLayout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(splitPanelLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                    .addComponent(splitScrollPane, GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
+                    .addComponent(splitScrollPane, GroupLayout.DEFAULT_SIZE, 442, Short.MAX_VALUE)
                     .addGroup(splitPanelLayout.createSequentialGroup()
                         .addComponent(limitLabel)
                         .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
@@ -198,19 +210,63 @@ public class MainFrame extends javax.swing.JFrame {
                     .addComponent(limitLabel)
                     .addComponent(limitSpinner, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(splitScrollPane, GroupLayout.DEFAULT_SIZE, 281, Short.MAX_VALUE)
+                .addComponent(splitScrollPane, GroupLayout.DEFAULT_SIZE, 326, Short.MAX_VALUE)
                 .addContainerGap())
         );
 
         tabbedPane.addTab("Split", splitPanel);
 
+        replacementLabel.setText("Replacement: ");
+
+        buttonGroup.add(replaceFirstRadioButton);
+        replaceFirstRadioButton.setText("Replace First");
+        replaceFirstRadioButton.addItemListener(formListener);
+
+        buttonGroup.add(replaceAllRadioButton);
+        replaceAllRadioButton.setText("Replace All");
+        replaceAllRadioButton.addItemListener(formListener);
+
+        unescapeJavaCheckBox.setText("Unescapes Java");
+        unescapeJavaCheckBox.addItemListener(formListener);
+
+        resultTextArea.setColumns(20);
+        resultTextArea.setRows(5);
+        replaceResultScrollPane.setViewportView(resultTextArea);
+
         GroupLayout replacePanelLayout = new GroupLayout(replacePanel);
         replacePanel.setLayout(replacePanelLayout);
         replacePanelLayout.setHorizontalGroup(replacePanelLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
-            .addGap(0, 492, Short.MAX_VALUE)
+            .addGroup(replacePanelLayout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(replacePanelLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                    .addComponent(replaceResultScrollPane)
+                    .addGroup(replacePanelLayout.createSequentialGroup()
+                        .addComponent(replacementLabel)
+                        .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(replacementTextField))
+                    .addGroup(replacePanelLayout.createSequentialGroup()
+                        .addComponent(replaceFirstRadioButton)
+                        .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(replaceAllRadioButton)
+                        .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(unescapeJavaCheckBox)
+                        .addGap(0, 0, Short.MAX_VALUE)))
+                .addContainerGap())
         );
         replacePanelLayout.setVerticalGroup(replacePanelLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
-            .addGap(0, 283, Short.MAX_VALUE)
+            .addGroup(replacePanelLayout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(replacePanelLayout.createParallelGroup(GroupLayout.Alignment.BASELINE)
+                    .addComponent(replacementLabel)
+                    .addComponent(replacementTextField, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(replacePanelLayout.createParallelGroup(GroupLayout.Alignment.BASELINE)
+                    .addComponent(replaceFirstRadioButton)
+                    .addComponent(replaceAllRadioButton)
+                    .addComponent(unescapeJavaCheckBox))
+                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(replaceResultScrollPane)
+                .addContainerGap())
         );
 
         tabbedPane.addTab("Replace", replacePanel);
@@ -218,10 +274,10 @@ public class MainFrame extends javax.swing.JFrame {
         GroupLayout snippetPanelLayout = new GroupLayout(snippetPanel);
         snippetPanel.setLayout(snippetPanelLayout);
         snippetPanelLayout.setHorizontalGroup(snippetPanelLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
-            .addGap(0, 492, Short.MAX_VALUE)
+            .addGap(0, 462, Short.MAX_VALUE)
         );
         snippetPanelLayout.setVerticalGroup(snippetPanelLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
-            .addGap(0, 283, Short.MAX_VALUE)
+            .addGap(0, 374, Short.MAX_VALUE)
         );
 
         tabbedPane.addTab("Snippet", snippetPanel);
@@ -232,14 +288,26 @@ public class MainFrame extends javax.swing.JFrame {
 
         getContentPane().add(mainPanel, BorderLayout.CENTER);
 
-        setSize(new Dimension(513, 542));
+        setSize(new Dimension(483, 575));
         setLocationRelativeTo(null);
     }
 
     // Code for dispatching events from components to event handlers.
 
-    private class FormListener implements PropertyChangeListener, ChangeListener {
+    private class FormListener implements ItemListener, PropertyChangeListener, ChangeListener {
         FormListener() {}
+        public void itemStateChanged(ItemEvent evt) {
+            if (evt.getSource() == replaceFirstRadioButton) {
+                MainFrame.this.replaceFirstRadioButtonItemStateChanged(evt);
+            }
+            else if (evt.getSource() == replaceAllRadioButton) {
+                MainFrame.this.replaceAllRadioButtonItemStateChanged(evt);
+            }
+            else if (evt.getSource() == unescapeJavaCheckBox) {
+                MainFrame.this.unescapeJavaCheckBoxItemStateChanged(evt);
+            }
+        }
+
         public void propertyChange(PropertyChangeEvent evt) {
             if (evt.getSource() == MainFrame.this) {
                 MainFrame.this.formPropertyChange(evt);
@@ -268,9 +336,13 @@ public class MainFrame extends javax.swing.JFrame {
 			case "pattern":
 				updateGroups();
 				updateSplit();
+				updateReplace();
 				break;
 			case "limit":
 				updateSplit((Integer) limitSpinner.getValue());
+				break;
+			case "replacement":
+				updateReplace();
 				break;
 			case "":
 				break;
@@ -281,6 +353,18 @@ public class MainFrame extends javax.swing.JFrame {
     private void limitSpinnerStateChanged(ChangeEvent evt) {//GEN-FIRST:event_limitSpinnerStateChanged
 		firePropertyChange("limit", null, limitSpinner.getValue());
     }//GEN-LAST:event_limitSpinnerStateChanged
+
+    private void replaceFirstRadioButtonItemStateChanged(ItemEvent evt) {//GEN-FIRST:event_replaceFirstRadioButtonItemStateChanged
+        firePropertyChange("replacement", null, null);
+    }//GEN-LAST:event_replaceFirstRadioButtonItemStateChanged
+
+    private void replaceAllRadioButtonItemStateChanged(ItemEvent evt) {//GEN-FIRST:event_replaceAllRadioButtonItemStateChanged
+        firePropertyChange("replacement", null, null);
+    }//GEN-LAST:event_replaceAllRadioButtonItemStateChanged
+
+    private void unescapeJavaCheckBoxItemStateChanged(ItemEvent evt) {//GEN-FIRST:event_unescapeJavaCheckBoxItemStateChanged
+        firePropertyChange("replacement", null, null);
+    }//GEN-LAST:event_unescapeJavaCheckBoxItemStateChanged
 
 	private void initTableModels() {
 		groupModel = new DefaultTableModel();
@@ -338,6 +422,12 @@ public class MainFrame extends javax.swing.JFrame {
                 firePropertyChange("input", null, text);
             }
         });
+        replacementTextField.getDocument().addDocumentListener(new DocumentListenerAdapter() {
+            @Override
+            public void update(String text) {
+                firePropertyChange("replacement", null, text);
+            }
+        });
     }
     
     private void compileRegex(String regex) {
@@ -386,6 +476,31 @@ public class MainFrame extends javax.swing.JFrame {
 		//resizeColumnWidth(splitTable);
 	}
 
+	private void updateReplace() {
+		String replacement = replacementTextField.getText();
+		if (unescapeJavaCheckBox.isSelected()) {
+			replacement = PatternUtils.unescape_perl_string(replacement);
+		}
+		String input = inputTextArea.getText();
+		if ((replacement != null) && (input != null)) {
+			try {
+				if (replaceFirstRadioButton.isSelected()) {
+					resultTextArea.setText(pattern.matcher(input).replaceFirst(replacement));
+				} else if (replaceAllRadioButton.isSelected()) {
+					resultTextArea.setText(pattern.matcher(input).replaceAll(replacement));
+				}
+				replacementTextField.setForeground(Color.BLACK);
+				replacementTextField.setBackground(Color.WHITE);
+			} catch (Exception e) {
+				LOG.log(Level.SEVERE, "There was an error.", e);
+				replacementTextField.setForeground(Color.RED);
+				replacementTextField.setBackground(new Color(255, 230, 230));
+			}
+		} else {
+			resultTextArea.setText("");
+		}
+	}
+
 	/**
 	 * @param args the command line arguments
 	 */
@@ -424,24 +539,16 @@ public class MainFrame extends javax.swing.JFrame {
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private ButtonGroup buttonGroup;
     private JPanel flagsPanel;
-    private JPanel groupsPanel;
-    private JScrollPane groupsScrollPane;
     private JTable groupsTable;
-    private JScrollPane inputScrollPane;
     private JTextArea inputTextArea;
-    private JLabel limitLabel;
     private JSpinner limitSpinner;
-    private JPanel mainPanel;
-    private JLabel regexLabel;
-    private JPanel regexPanel;
     private JTextField regexTextField;
-    private JPanel replacePanel;
-    private JPanel snippetPanel;
-    private JSplitPane splitPane;
-    private JPanel splitPanel;
-    private JScrollPane splitScrollPane;
+    private JRadioButton replaceAllRadioButton;
+    private JRadioButton replaceFirstRadioButton;
+    private JTextField replacementTextField;
+    private JTextArea resultTextArea;
     private JTable splitTable;
-    private JTabbedPane tabbedPane;
+    private JCheckBox unescapeJavaCheckBox;
     // End of variables declaration//GEN-END:variables
 
 
