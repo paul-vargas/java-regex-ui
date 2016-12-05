@@ -14,9 +14,13 @@ import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Iterator;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -512,6 +516,159 @@ public class MainFrame extends javax.swing.JFrame {
 		} else {
 			resultTextArea.setText("");
 		}
+	}
+	
+	private void updateSnippet() {
+		String replacement = replacementTextField.getText();
+		String input = inputTextArea.getText();
+
+		StringWriter writer = new StringWriter();
+		PrintWriter out = new PrintWriter(writer, true);
+		out.print("You can try the following regular expression:\n\n\t");
+		out.println(pattern.pattern());
+		out.println("\nAdditionally, if you plan to use the regular expression very often, it is recommended to use a constant in order to avoid recompile it each time, e.g.:\n\n");
+
+		out.printf("\tprivate static final Pattern REGEX_PATTERN = \n\t\t\tPattern.compile(\"%s\"%s);%n", new Object[]{
+			escapeJava(pattern.pattern()), flags != 0 ? ", "
+			+ getStringFlags() : ""});
+		out.println();
+		out.println("\tpublic static void main(String[] args) {");
+		if ((input != null) && (!input.isEmpty())) {
+			out.printf("\t\tString input = \"%s\";%n", new Object[]{escapeJava(input)});
+			out.println();
+			if (replaceFirstRadioButton.isSelected()) {
+				out.println("\t\tSystem.out.println(");
+				out.printf("\t\t\tinput.replaceFirst(\"%s\", \"%s\")%n", new Object[]{
+					escapeJava(pattern.pattern()),
+					escapeJava(replacement)});
+				out.printf("\t\t);  // prints \"%s\"%n", new Object[]{pattern
+					.matcher(input).replaceFirst(replacement)});
+			}
+			if (replaceAllRadioButton.isSelected()) {
+				out.println("\t\tSystem.out.println(");
+				out.printf("\t\t\tinput.replaceAll(\"%s\", \"%s\")%n", new Object[]{
+					escapeJava(pattern.pattern()),
+					escapeJava(replacement)});
+				out.printf("\t\t);  // prints \"%s\"%n", new Object[]{pattern
+					.matcher(input).replaceAll(replacement)});
+			}
+			out.println();
+			out.println("\t\tSystem.out.println(java.util.Arrays.toString(");
+			out.println("\t\t\tREGEX_PATTERN.split(input)");
+			out.printf("\t\t)); // prints \"%s\"%n", new Object[]{
+				Arrays.toString(pattern.split(input))});
+
+			out.println();
+			out.println("\t\tSystem.out.println(");
+			out.println("\t\t\tREGEX_PATTERN.matcher(input).matches()");
+			out.printf("\t\t);  // prints \"%s\"%n", new Object[]{
+				Boolean.valueOf(pattern.matcher(input).matches())});
+
+			out.println();
+			out.println("\t\tMatcher matcher = REGEX_PATTERN.matcher(input);");
+			out.println("\t\twhile (matcher.find()) {");
+			out.println("\t\t\tSystem.out.println(matcher.group());");
+			out.println("\t\t}");
+
+			out.println();
+			if (replaceFirstRadioButton.isSelected()) {
+				out.println("\t\tSystem.out.println(");
+				out.printf("\t\t\tREGEX_PATTERN.matcher(input).replaceFirst(\"%s\")%n", new Object[]{replacement
+					.replace("\\", "\\\\")
+					.replace("\"", "\\\"")});
+				out.printf("\t\t);  // prints \"%s\"%n", new Object[]{pattern.matcher(input).replaceFirst(replacement)});
+			}
+			if (replaceAllRadioButton.isSelected()) {
+				out.println("\t\tSystem.out.println(");
+				out.printf("\t\t\tREGEX_PATTERN.matcher(input).replaceAll(\"%s\")%n", new Object[]{replacement
+					.replace("\\", "\\\\")
+					.replace("\"", "\\\"")});
+				out.printf("\t\t);  // prints \"%s\"%n", new Object[]{pattern.matcher(input).replaceAll(replacement)});
+			}
+		}
+		out.println("\t}");
+		out.println();
+		out.println("Output:");
+		out.println();
+		Matcher matcher = pattern.matcher(input);
+		while (matcher.find()) {
+			out.printf("\t%s%n", new Object[]{matcher.group()});
+		}
+		//snippetTextArea.setText(writer.toString());
+	}
+
+	private String escapeJava(final String input) {
+		final StringBuilder builder = new StringBuilder(input.length());
+		for (int i = 0; i < input.length(); i++) {
+			final char c = input.charAt(i);
+			switch (c) {
+				// Java does not recognize \a or \v, apparently.
+				case 0x07:
+					builder.append("\\a");
+					break;
+				case '\b':
+					builder.append("\\b");
+					break;
+				case '\f':
+					builder.append("\\f");
+					break;
+				case '\n':
+					builder.append("\\n");
+					break;
+				case '\r':
+					builder.append("\\r");
+					break;
+				case '\t':
+					builder.append("\\t");
+					break;
+				case 0x0b:
+					builder.append("\\v");
+					break;
+				case '\\':
+					builder.append("\\\\");
+					break;
+				case '\'':
+					builder.append("\\\'");
+					break;
+				case '"':
+					builder.append("\\\"");
+					break;
+				default:
+					// Only ASCII characters between 0x20 (space) and 0x7e (tilde) are
+					// printable.  Other byte values must be escaped.
+					if (c >= 0x20 && c <= 0x7e) {
+						builder.append(c);
+					} else {
+						builder.append('\\');
+						builder.append((char) ('0' + ((c >>> 6) & 3)));
+						builder.append((char) ('0' + ((c >>> 3) & 7)));
+						builder.append((char) ('0' + (c & 7)));
+					}
+					break;
+			}
+		}
+		return builder.toString();
+	}
+
+	private String getStringFlags() {
+		List<String> list = new ArrayList<>();
+		for (Field field : Pattern.class.getDeclaredFields()) {
+			int modifiers = field.getModifiers();
+			if (Modifier.isPublic(modifiers) && Modifier.isFinal(modifiers)) {
+				if ((flags & getValue(field.getName())) != 0) {
+					list.add("Pattern." + field.getName());
+				}
+			}
+		}
+		StringBuilder sb = new StringBuilder(Byte.MAX_VALUE);
+		Iterator<String> it = list.iterator();
+		while (it.hasNext()) {
+			sb.append(it.next());
+			if (it.hasNext()) {
+				sb.append(" | ");
+			}
+		}
+		return sb.toString();
 	}
 
 	/**
