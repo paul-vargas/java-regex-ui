@@ -16,10 +16,6 @@ import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.lang.reflect.Field;
@@ -30,13 +26,11 @@ import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Iterator;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 import javax.swing.BorderFactory;
 import javax.swing.ButtonGroup;
@@ -68,6 +62,8 @@ import tchrist.PatternUtils;
  * @author pvargasbext
  */
 public class MainFrame extends javax.swing.JFrame {
+
+	private static final long serialVersionUID = 1L;
 
 	private static final Logger LOG = Logger.getLogger(MainFrame.class.getName());
 
@@ -449,10 +445,10 @@ public class MainFrame extends javax.swing.JFrame {
 					JCheckBox src = (JCheckBox) evt.getSource();
 					switch(evt.getStateChange()) {
 						case ItemEvent.SELECTED:
-							flags |= getValue(src.getText());
+							flags |= Utils.getValue(src.getText());
 							break;
 						default:
-							flags &= ~getValue(src.getText());
+							flags &= ~Utils.getValue(src.getText());
 							break;
 					}
 					firePropertyChange("flags", null, regexTextField.getText());
@@ -460,15 +456,6 @@ public class MainFrame extends javax.swing.JFrame {
 				flagsPanel.add(checkBox);
 			}
 		}
-	}
-	
-	private static final int getValue(String fieldName) {
-		try {
-			return Pattern.class.getField(fieldName).getInt(null);
-		} catch (NoSuchFieldException | SecurityException | IllegalArgumentException | IllegalAccessException ex) {
-			Logger.getLogger(App.class.getName()).log(Level.SEVERE, null, ex);
-		}
-		return 0;
 	}
     
     private void initDocumentListeners() {
@@ -580,41 +567,37 @@ public class MainFrame extends javax.swing.JFrame {
 		out.println(pattern.pattern());
 		out.println("\nAdditionally, if you plan to use the regular expression very often, it is recommended to use a constant in order to avoid recompile it each time, e.g.:\n\n");
 
-		out.printf("\tprivate static final Pattern REGEX_PATTERN = \n\t\t\tPattern.compile(\"%s\"%s);%n", new Object[]{
-			escapeJava(pattern.pattern()), flags != 0 ? ", "
-			+ getStringFlags() : ""});
+		out.printf("\tprivate static final Pattern REGEX_PATTERN = \n\t\t\tPattern.compile(\"%s\"%s);%n",
+				new Object[] { escapeJava(pattern.pattern()), flags != 0 ? ", " + Utils.getStringFlags(flags) : "" });
 		out.println();
 		out.println("\tpublic static void main(String[] args) {");
 		if ((input != null) && (!input.isEmpty())) {
-			out.printf("\t\tString input = \"%s\";%n", new Object[]{escapeJava(input)});
+			out.printf("\t\tString input = \"%s\";%n", new Object[] { escapeJava(input) });
 			out.println();
 			if (replaceFirstRadioButton.isSelected()) {
 				out.println("\t\tSystem.out.println(");
-				out.printf("\t\t\tinput.replaceFirst(\"%s\", \"%s\")%n", new Object[]{
-					escapeJava(pattern.pattern()),
-					escapeJava(replacement)});
-				out.printf("\t\t);  // prints \"%s\"%n", new Object[]{pattern
-					.matcher(input).replaceFirst(replacement)});
+				out.printf("\t\t\tinput.replaceFirst(\"%s\", \"%s\")%n",
+						new Object[] { escapeJava(pattern.pattern()), escapeJava(replacement) });
+				out.printf("\t\t);  // prints \"%s\"%n",
+						new Object[] { pattern.matcher(input).replaceFirst(replacement) });
 			}
 			if (replaceAllRadioButton.isSelected()) {
 				out.println("\t\tSystem.out.println(");
-				out.printf("\t\t\tinput.replaceAll(\"%s\", \"%s\")%n", new Object[]{
-					escapeJava(pattern.pattern()),
-					escapeJava(replacement)});
-				out.printf("\t\t);  // prints \"%s\"%n", new Object[]{pattern
-					.matcher(input).replaceAll(replacement)});
+				out.printf("\t\t\tinput.replaceAll(\"%s\", \"%s\")%n",
+						new Object[] { escapeJava(pattern.pattern()), escapeJava(replacement) });
+				out.printf("\t\t);  // prints \"%s\"%n",
+						new Object[] { pattern.matcher(input).replaceAll(replacement) });
 			}
 			out.println();
 			out.println("\t\tSystem.out.println(java.util.Arrays.toString(");
 			out.println("\t\t\tREGEX_PATTERN.split(input)");
-			out.printf("\t\t)); // prints \"%s\"%n", new Object[]{
-				Arrays.toString(pattern.split(input))});
+			out.printf("\t\t)); // prints \"%s\"%n", new Object[] { Arrays.toString(pattern.split(input)) });
 
 			out.println();
 			out.println("\t\tSystem.out.println(");
 			out.println("\t\t\tREGEX_PATTERN.matcher(input).matches()");
-			out.printf("\t\t);  // prints \"%s\"%n", new Object[]{
-				Boolean.valueOf(pattern.matcher(input).matches())});
+			out.printf("\t\t);  // prints \"%s\"%n",
+					new Object[] { Boolean.valueOf(pattern.matcher(input).matches()) });
 
 			out.println();
 			out.println("\t\tMatcher matcher = REGEX_PATTERN.matcher(input);");
@@ -625,17 +608,17 @@ public class MainFrame extends javax.swing.JFrame {
 			out.println();
 			if (replaceFirstRadioButton.isSelected()) {
 				out.println("\t\tSystem.out.println(");
-				out.printf("\t\t\tREGEX_PATTERN.matcher(input).replaceFirst(\"%s\")%n", new Object[]{replacement
-					.replace("\\", "\\\\")
-					.replace("\"", "\\\"")});
-				out.printf("\t\t);  // prints \"%s\"%n", new Object[]{pattern.matcher(input).replaceFirst(replacement)});
+				out.printf("\t\t\tREGEX_PATTERN.matcher(input).replaceFirst(\"%s\")%n",
+						new Object[] { replacement.replace("\\", "\\\\").replace("\"", "\\\"") });
+				out.printf("\t\t);  // prints \"%s\"%n",
+						new Object[] { pattern.matcher(input).replaceFirst(replacement) });
 			}
 			if (replaceAllRadioButton.isSelected()) {
 				out.println("\t\tSystem.out.println(");
-				out.printf("\t\t\tREGEX_PATTERN.matcher(input).replaceAll(\"%s\")%n", new Object[]{replacement
-					.replace("\\", "\\\\")
-					.replace("\"", "\\\"")});
-				out.printf("\t\t);  // prints \"%s\"%n", new Object[]{pattern.matcher(input).replaceAll(replacement)});
+				out.printf("\t\t\tREGEX_PATTERN.matcher(input).replaceAll(\"%s\")%n",
+						new Object[] { replacement.replace("\\", "\\\\").replace("\"", "\\\"") });
+				out.printf("\t\t);  // prints \"%s\"%n",
+						new Object[] { pattern.matcher(input).replaceAll(replacement) });
 			}
 		}
 		out.println("\t}");
@@ -644,9 +627,9 @@ public class MainFrame extends javax.swing.JFrame {
 		out.println();
 		Matcher matcher = pattern.matcher(input);
 		while (matcher.find()) {
-			out.printf("\t%s%n", new Object[]{matcher.group()});
+			out.printf("\t%s%n", new Object[] { matcher.group() });
 		}
-		//snippetTextArea.setText(writer.toString());
+		snippetTextArea.setText(writer.toString());
 	}
 
 	private String escapeJava(final String input) {
@@ -701,33 +684,12 @@ public class MainFrame extends javax.swing.JFrame {
 		}
 		return builder.toString();
 	}
-
-	private String getStringFlags() {
-		List<String> list = new ArrayList<>();
-		for (Field field : Pattern.class.getDeclaredFields()) {
-			int modifiers = field.getModifiers();
-			if (Modifier.isPublic(modifiers) && Modifier.isFinal(modifiers)) {
-				if ((flags & getValue(field.getName())) != 0) {
-					list.add("Pattern." + field.getName());
-				}
-			}
-		}
-		StringBuilder sb = new StringBuilder(Byte.MAX_VALUE);
-		Iterator<String> it = list.iterator();
-		while (it.hasNext()) {
-			sb.append(it.next());
-			if (it.hasNext()) {
-				sb.append(" | ");
-			}
-		}
-		return sb.toString();
-	}
     
     private void addExplain() {
         Charset charset = StandardCharsets.ISO_8859_1;
         if (pattern != null) {
             try {
-                String content = toString(new URL("http://rick.measham.id.au/paste/explain.pl?regex=" + URLEncoder.encode(pattern.pattern(), charset.name())), charset);
+                String content = Utils.toString(new URL("http://rick.measham.id.au/paste/explain.pl?regex=" + URLEncoder.encode(pattern.pattern(), charset.name())), charset);
                 String explain = content.replaceAll("(?s).*<pre>(.*?)</pre>.*", "$1");
                 snippetTextArea.append(System.lineSeparator());
                 snippetTextArea.append("Explanation of the regular expression:");
@@ -740,15 +702,6 @@ public class MainFrame extends javax.swing.JFrame {
             } catch (Exception e) {
                 JOptionPane.showMessageDialog(this, "There was an error getting the explanation: " + e.getMessage(), "Error", 0);
             }
-        }
-    }
-
-    private String toString(URL url, Charset charset) throws IOException {
-        System.out.println(url);
-        try (InputStream is = url.openStream();
-                InputStreamReader isr = new InputStreamReader(is, charset);
-                BufferedReader reader = new BufferedReader(isr)) {
-            return reader.lines().collect(Collectors.joining(System.lineSeparator()));
         }
     }
 

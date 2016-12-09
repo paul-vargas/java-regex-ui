@@ -1,12 +1,17 @@
 package org.paulvargas.tools.regex;
 
-import java.awt.*;
+import java.awt.Component;
+import java.awt.Container;
+import java.awt.Dimension;
+import java.awt.FlowLayout;
+import java.awt.Insets;
+
 import javax.swing.JScrollPane;
 import javax.swing.SwingUtilities;
 
 /**
  * FlowLayout subclass that fully supports wrapping of components.
- * 
+ *
  * NOTE: Code from https://tips4java.wordpress.com/2008/11/06/wrap-layout/
  */
 public class WrapLayout extends FlowLayout {
@@ -29,7 +34,7 @@ public class WrapLayout extends FlowLayout {
 	 *
 	 * @param align the alignment value
 	 */
-	public WrapLayout(int align) {
+	public WrapLayout(final int align) {
 		super(align);
 	}
 
@@ -45,7 +50,7 @@ public class WrapLayout extends FlowLayout {
 	 * @param hgap the horizontal gap between components
 	 * @param vgap the vertical gap between components
 	 */
-	public WrapLayout(int align, int hgap, int vgap) {
+	public WrapLayout(final int align, final int hgap, final int vgap) {
 		super(align, hgap, vgap);
 	}
 
@@ -58,7 +63,7 @@ public class WrapLayout extends FlowLayout {
 	 * specified container
 	 */
 	@Override
-	public Dimension preferredLayoutSize(Container target) {
+	public Dimension preferredLayoutSize(final Container target) {
 		return layoutSize(target, true);
 	}
 
@@ -71,9 +76,9 @@ public class WrapLayout extends FlowLayout {
 	 * specified container
 	 */
 	@Override
-	public Dimension minimumLayoutSize(Container target) {
-		Dimension minimum = layoutSize(target, false);
-		minimum.width -= (getHgap() + 1);
+	public Dimension minimumLayoutSize(final Container target) {
+		final Dimension minimum = layoutSize(target, false);
+		minimum.width -= getHgap() + 1;
 		return minimum;
 	}
 
@@ -85,7 +90,7 @@ public class WrapLayout extends FlowLayout {
 	 * @param preferred should preferred size be calculated
 	 * @return the dimension to layout the target container
 	 */
-	private Dimension layoutSize(Container target, boolean preferred) {
+	private Dimension layoutSize(final Container target, final boolean preferred) {
 		synchronized (target.getTreeLock()) {
 			//  Each row must fit with the width allocated to the containter.
 			//  When the container width = 0, the preferred width of the container
@@ -104,24 +109,24 @@ public class WrapLayout extends FlowLayout {
 				targetWidth = Integer.MAX_VALUE;
 			}
 
-			int hgap = getHgap();
-			int vgap = getVgap();
-			Insets insets = target.getInsets();
-			int horizontalInsetsAndGap = insets.left + insets.right + (hgap * 2);
-			int maxWidth = targetWidth - horizontalInsetsAndGap;
+			final int hgap = getHgap();
+			final int vgap = getVgap();
+			final Insets insets = target.getInsets();
+			final int horizontalInsetsAndGap = insets.left + insets.right + hgap * 2;
+			final int maxWidth = targetWidth - horizontalInsetsAndGap;
 
 			//  Fit components into the allowed width
-			Dimension dim = new Dimension(0, 0);
+			final Dimension dim = new Dimension(0, 0);
 			int rowWidth = 0;
 			int rowHeight = 0;
 
-			int nmembers = target.getComponentCount();
+			final int nmembers = target.getComponentCount();
 
 			for (int i = 0; i < nmembers; i++) {
-				Component m = target.getComponent(i);
+				final Component m = target.getComponent(i);
 
 				if (m.isVisible()) {
-					Dimension d = preferred ? m.getPreferredSize() : m.getMinimumSize();
+					final Dimension d = preferred ? m.getPreferredSize() : m.getMinimumSize();
 
 					//  Can't add the component to current row. Start a new row.
 					if (rowWidth + d.width > maxWidth) {
@@ -149,10 +154,10 @@ public class WrapLayout extends FlowLayout {
 			//  make sure the preferred size is less than the size of the
 			//  target containter so shrinking the container size works
 			//  correctly. Removing the horizontal gap is an easy way to do this.
-			Container scrollPane = SwingUtilities.getAncestorOfClass(JScrollPane.class, target);
+			final Container scrollPane = SwingUtilities.getAncestorOfClass(JScrollPane.class, target);
 
 			if (scrollPane != null && target.isValid()) {
-				dim.width -= (hgap + 1);
+				dim.width -= hgap + 1;
 			}
 
 			return dim;
@@ -167,7 +172,7 @@ public class WrapLayout extends FlowLayout {
 	 *  @param rowWidth the width of the row to add
 	 *  @param rowHeight the height of the row to add
 	 */
-	private void addRow(Dimension dim, int rowWidth, int rowHeight) {
+	private void addRow(final Dimension dim, final int rowWidth, final int rowHeight) {
 		dim.width = Math.max(dim.width, rowWidth);
 
 		if (dim.height > 0) {
