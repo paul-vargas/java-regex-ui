@@ -10,14 +10,24 @@ import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Font;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
+import java.net.URL;
+import java.net.URLEncoder;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
@@ -26,12 +36,15 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import javax.swing.BorderFactory;
 import javax.swing.ButtonGroup;
 import javax.swing.GroupLayout;
+import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JRadioButton;
 import javax.swing.JScrollPane;
@@ -110,6 +123,9 @@ public class MainFrame extends javax.swing.JFrame {
         JScrollPane replaceResultScrollPane = new JScrollPane();
         resultTextArea = new JTextArea();
         JPanel snippetPanel = new JPanel();
+        addExplainButton = new JButton();
+        jScrollPane1 = new JScrollPane();
+        snippetTextArea = new JTextArea();
 
         FormListener formListener = new FormListener();
 
@@ -274,13 +290,33 @@ public class MainFrame extends javax.swing.JFrame {
 
         tabbedPane.addTab("Replace", replacePanel);
 
+        addExplainButton.setText("Add Explain");
+        addExplainButton.addActionListener(formListener);
+
+        snippetTextArea.setColumns(20);
+        snippetTextArea.setFont(new Font("Monospaced", 0, 12)); // NOI18N
+        snippetTextArea.setRows(5);
+        jScrollPane1.setViewportView(snippetTextArea);
+
         GroupLayout snippetPanelLayout = new GroupLayout(snippetPanel);
         snippetPanel.setLayout(snippetPanelLayout);
         snippetPanelLayout.setHorizontalGroup(snippetPanelLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
-            .addGap(0, 462, Short.MAX_VALUE)
+            .addGroup(snippetPanelLayout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(snippetPanelLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                    .addGroup(snippetPanelLayout.createSequentialGroup()
+                        .addComponent(addExplainButton)
+                        .addGap(0, 0, Short.MAX_VALUE))
+                    .addComponent(jScrollPane1, GroupLayout.DEFAULT_SIZE, 442, Short.MAX_VALUE))
+                .addContainerGap())
         );
         snippetPanelLayout.setVerticalGroup(snippetPanelLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
-            .addGap(0, 378, Short.MAX_VALUE)
+            .addGroup(snippetPanelLayout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(addExplainButton)
+                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jScrollPane1, GroupLayout.DEFAULT_SIZE, 330, Short.MAX_VALUE)
+                .addContainerGap())
         );
 
         tabbedPane.addTab("Snippet", snippetPanel);
@@ -297,8 +333,14 @@ public class MainFrame extends javax.swing.JFrame {
 
     // Code for dispatching events from components to event handlers.
 
-    private class FormListener implements ItemListener, PropertyChangeListener, ChangeListener {
+    private class FormListener implements ActionListener, ItemListener, PropertyChangeListener, ChangeListener {
         FormListener() {}
+        public void actionPerformed(ActionEvent evt) {
+            if (evt.getSource() == addExplainButton) {
+                MainFrame.this.addExplainButtonActionPerformed(evt);
+            }
+        }
+
         public void itemStateChanged(ItemEvent evt) {
             if (evt.getSource() == replaceFirstRadioButton) {
                 MainFrame.this.replaceFirstRadioButtonItemStateChanged(evt);
@@ -354,6 +396,12 @@ public class MainFrame extends javax.swing.JFrame {
 			case "unescapeJava":
 				updateReplace();
 				break;
+			case "snippet":
+                updateSnippet();
+				break;
+			case "explain":
+                addExplain();
+				break;
 			case "":
 				break;
 			default:
@@ -375,6 +423,10 @@ public class MainFrame extends javax.swing.JFrame {
     private void unescapeJavaCheckBoxItemStateChanged(ItemEvent evt) {//GEN-FIRST:event_unescapeJavaCheckBoxItemStateChanged
         firePropertyChange("unescapeJava", null, null);
     }//GEN-LAST:event_unescapeJavaCheckBoxItemStateChanged
+
+    private void addExplainButtonActionPerformed(ActionEvent evt) {//GEN-FIRST:event_addExplainButtonActionPerformed
+        firePropertyChange("explain", null, null);
+    }//GEN-LAST:event_addExplainButtonActionPerformed
 
 	private void initTableModels() {
 		groupModel = new DefaultTableModel();
@@ -670,6 +722,35 @@ public class MainFrame extends javax.swing.JFrame {
 		}
 		return sb.toString();
 	}
+    
+    private void addExplain() {
+        Charset charset = StandardCharsets.ISO_8859_1;
+        if (pattern != null) {
+            try {
+                String content = toString(new URL("http://rick.measham.id.au/paste/explain.pl?regex=" + URLEncoder.encode(pattern.pattern(), charset.name())), charset);
+                String explain = content.replaceAll("(?s).*<pre>(.*?)</pre>.*", "$1");
+                snippetTextArea.append(System.lineSeparator());
+                snippetTextArea.append("Explanation of the regular expression:");
+                snippetTextArea.append(System.lineSeparator());
+                for (String line : explain.split("\r\n", -1)) {
+                    snippetTextArea.append("\t");
+                    snippetTextArea.append(line);
+                    snippetTextArea.append(System.lineSeparator());
+                }
+            } catch (Exception e) {
+                JOptionPane.showMessageDialog(this, "There was an error getting the explanation: " + e.getMessage(), "Error", 0);
+            }
+        }
+    }
+
+    private String toString(URL url, Charset charset) throws IOException {
+        System.out.println(url);
+        try (InputStream is = url.openStream();
+                InputStreamReader isr = new InputStreamReader(is, charset);
+                BufferedReader reader = new BufferedReader(isr)) {
+            return reader.lines().collect(Collectors.joining(System.lineSeparator()));
+        }
+    }
 
 	/**
 	 * @param args the command line arguments
@@ -707,16 +788,19 @@ public class MainFrame extends javax.swing.JFrame {
 	}
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private JButton addExplainButton;
     private ButtonGroup buttonGroup;
     private JPanel flagsPanel;
     private JTable groupsTable;
     private JTextArea inputTextArea;
+    private JScrollPane jScrollPane1;
     private JSpinner limitSpinner;
     private JTextField regexTextField;
     private JRadioButton replaceAllRadioButton;
     private JRadioButton replaceFirstRadioButton;
     private JTextField replacementTextField;
     private JTextArea resultTextArea;
+    private JTextArea snippetTextArea;
     private JTable splitTable;
     private JCheckBox unescapeJavaCheckBox;
     // End of variables declaration//GEN-END:variables
