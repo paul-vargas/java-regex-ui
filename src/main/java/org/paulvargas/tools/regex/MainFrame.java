@@ -237,6 +237,7 @@ public class MainFrame extends javax.swing.JFrame {
         replaceFirstRadioButton.addItemListener(formListener);
 
         buttonGroup.add(replaceAllRadioButton);
+        replaceAllRadioButton.setSelected(true);
         replaceAllRadioButton.setText("Replace All");
         replaceAllRadioButton.addItemListener(formListener);
 
@@ -375,11 +376,13 @@ public class MainFrame extends javax.swing.JFrame {
 			case "input":
 				updateGroups();
 				updateSplit();
+				updateSnippet();
 				break;
 			case "pattern":
 				updateGroups();
 				updateSplit();
 				updateReplace();
+				updateSnippet();
 				break;
 			case "limit":
 				updateSplit((Integer) limitSpinner.getValue());
@@ -558,6 +561,7 @@ public class MainFrame extends javax.swing.JFrame {
 	}
 	
 	private void updateSnippet() {
+		int maxWidth = 100;
 		String replacement = replacementTextField.getText();
 		String input = inputTextArea.getText();
 
@@ -572,7 +576,7 @@ public class MainFrame extends javax.swing.JFrame {
 		out.println();
 		out.println("\tpublic static void main(String[] args) {");
 		if ((input != null) && (!input.isEmpty())) {
-			out.printf("\t\tString input = \"%s\";%n", new Object[] { escapeJava(input) });
+			out.printf("\t\tString input = \"%s\";%n", new Object[] { escapeJava( input) });
 			out.println();
 			if (replaceFirstRadioButton.isSelected()) {
 				out.println("\t\tSystem.out.println(");

@@ -64,4 +64,14 @@ public final class Utils {
 		return String.join(" | ", list);
 	}
 
+	public static String abbreviate(String str, int maxWidth) {
+		if (str == null) {
+			return null;
+		}
+		if (str.length() <= maxWidth) {
+			return str;
+		}
+		return str.substring(0, maxWidth - 3) + "...";
+	}
+
 }
