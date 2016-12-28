@@ -376,6 +376,7 @@ public class MainFrame extends javax.swing.JFrame {
 			case "input":
 				updateGroups();
 				updateSplit();
+				updateReplace();
 				updateSnippet();
 				break;
 			case "pattern":
