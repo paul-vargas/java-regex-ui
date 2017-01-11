@@ -35,7 +35,7 @@ public final class Utils {
 
 	public static int getValue(final Field field) {
 		try {
-			field.getInt(null);
+			return field.getInt(null);
 		} catch (SecurityException | IllegalArgumentException | IllegalAccessException e) {
 			LOG.log(Level.SEVERE, "Error getting the value.", e);
 		}

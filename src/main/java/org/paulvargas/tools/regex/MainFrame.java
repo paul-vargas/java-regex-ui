@@ -387,6 +387,7 @@ public class MainFrame extends javax.swing.JFrame {
 				break;
 			case "limit":
 				updateSplit((Integer) limitSpinner.getValue());
+				updateSnippet();
 				break;
 			case "replacement":
 				updateReplace((String) evt.getNewValue());
@@ -565,6 +566,7 @@ public class MainFrame extends javax.swing.JFrame {
 		int maxWidth = 100;
 		String replacement = replacementTextField.getText();
 		String input = inputTextArea.getText();
+		int splitLimit = (Integer) limitSpinner.getValue();
 
 		StringWriter writer = new StringWriter();
 		PrintWriter out = new PrintWriter(writer, true);
@@ -595,8 +597,12 @@ public class MainFrame extends javax.swing.JFrame {
 			}
 			out.println();
 			out.println("\t\tSystem.out.println(java.util.Arrays.toString(");
-			out.println("\t\t\tREGEX_PATTERN.split(input)");
-			out.printf("\t\t)); // prints \"%s\"%n", new Object[] { Arrays.toString(pattern.split(input)) });
+			out.printf("\t\t\tREGEX_PATTERN.split(input, %d)%n", splitLimit);
+			out.printf("\t\t)); // prints \"%s\"%n", new Object[]{Arrays.toString(pattern.split(input, splitLimit))});
+			out.println();
+			out.printf("\t\t//    \"%s\".split(\"%s\", %d) \u21D2 %s %n", escapeJava(input), escapeJava(pattern.pattern()), splitLimit, java.util.Arrays.stream(
+				pattern.split(input, splitLimit)
+		).map(e -> "\"" + e + "\"").collect(java.util.stream.Collectors.joining(", ", "[", "]")));
 
 			out.println();
 			out.println("\t\tSystem.out.println(");
@@ -679,10 +685,8 @@ public class MainFrame extends javax.swing.JFrame {
 					if (c >= 0x20 && c <= 0x7e) {
 						builder.append(c);
 					} else {
-						builder.append('\\');
-						builder.append((char) ('0' + ((c >>> 6) & 3)));
-						builder.append((char) ('0' + ((c >>> 3) & 7)));
-						builder.append((char) ('0' + (c & 7)));
+						builder.append("\\u");
+						builder.append(String.format("%04x", (int) c));
 					}
 					break;
 			}
