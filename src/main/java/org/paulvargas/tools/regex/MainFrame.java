@@ -6,7 +6,6 @@
 package org.paulvargas.tools.regex;
 
 import java.awt.BorderLayout;
-import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Font;
@@ -37,6 +36,8 @@ import javax.swing.ButtonGroup;
 import javax.swing.GroupLayout;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
+import javax.swing.JDialog;
+import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
@@ -50,10 +51,13 @@ import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import javax.swing.LayoutStyle;
 import javax.swing.SpinnerNumberModel;
+import javax.swing.UIManager;
 import javax.swing.WindowConstants;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.table.DefaultTableModel;
+
+import com.formdev.flatlaf.FlatDarculaLaf;
 
 import tchrist.PatternUtils;
 
@@ -79,6 +83,7 @@ public class MainFrame extends javax.swing.JFrame {
 	public MainFrame() {
 		initTableModels();
 		initComponents();
+		this.setIconImages(Utils.getIcons());
 		initFlags();
         initDocumentListeners();
 	}
@@ -487,13 +492,15 @@ public class MainFrame extends javax.swing.JFrame {
 	private void compileRegex(String regex) {
 		try {
 			pattern = Pattern.compile(regex, flags);
-			regexTextField.setForeground(new Color(0, 0, 153));
-			regexTextField.setBackground(Color.WHITE);
+			regexTextField.setForeground(UIManager.getColor("TextField.foreground"));
+//			regexTextField.setForeground(new Color(0, 0, 153));
+//			regexTextField.setBackground(Color.WHITE);
 			firePropertyChange("pattern", null, null);
 		} catch (Exception e) {
 			LOG.log(Level.SEVERE, "Error compiling regex", e);
-			regexTextField.setForeground(Color.RED);
-			regexTextField.setBackground(new Color(255, 230, 230));
+			regexTextField.setForeground(UIManager.getColor("Actions.Red"));
+//			regexTextField.setForeground(Color.RED);
+//			regexTextField.setBackground(new Color(255, 230, 230));
 		}
 	}
 	
@@ -550,12 +557,14 @@ public class MainFrame extends javax.swing.JFrame {
 				} else if (replaceAllRadioButton.isSelected()) {
 					resultTextArea.setText(pattern.matcher(input).replaceAll(replacement));
 				}
-				replacementTextField.setForeground(Color.BLACK);
-				replacementTextField.setBackground(Color.WHITE);
+				replacementTextField.setForeground(UIManager.getColor("TextField.foreground"));
+//				replacementTextField.setForeground(Color.BLACK);
+//				replacementTextField.setBackground(Color.WHITE);
 			} catch (Exception e) {
 				LOG.log(Level.SEVERE, "There was an error.", e);
-				replacementTextField.setForeground(Color.RED);
-				replacementTextField.setBackground(new Color(255, 230, 230));
+				replacementTextField.setForeground(UIManager.getColor("Actions.Red"));
+//				replacementTextField.setForeground(Color.RED);
+//				replacementTextField.setBackground(new Color(255, 230, 230));
 			}
 		} else {
 			resultTextArea.setText("");
@@ -723,7 +732,7 @@ public class MainFrame extends javax.swing.JFrame {
 		/* If Nimbus (introduced in Java SE 6) is not available, stay with the default look and feel.
          * For details see http://download.oracle.com/javase/tutorial/uiswing/lookandfeel/plaf.html 
 		 */
-		try {
+		/*try {
 			for (javax.swing.UIManager.LookAndFeelInfo info : javax.swing.UIManager.getInstalledLookAndFeels()) {
 				if ("Nimbus".equals(info.getName())) {
 					javax.swing.UIManager.setLookAndFeel(info.getClassName());
@@ -738,8 +747,17 @@ public class MainFrame extends javax.swing.JFrame {
 			java.util.logging.Logger.getLogger(MainFrame.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
 		} catch (javax.swing.UnsupportedLookAndFeelException ex) {
 			java.util.logging.Logger.getLogger(MainFrame.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-		}
+		}*/
 		//</editor-fold>
+		
+		try {
+			JFrame.setDefaultLookAndFeelDecorated( true );
+			JDialog.setDefaultLookAndFeelDecorated( true );
+			UIManager.setLookAndFeel( new FlatDarculaLaf() );
+			UIManager.put( "CheckBox.icon.style", "filled" );
+		} catch (Exception e) {
+			// TODO: handle exception
+		}
 
 		/* Create and display the form */
 		java.awt.EventQueue.invokeLater(new Runnable() {

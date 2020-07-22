@@ -1,5 +1,7 @@
 package org.paulvargas.tools.regex;
 
+import java.awt.Image;
+import java.awt.image.BufferedImage;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
@@ -14,6 +16,11 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+
+import javax.imageio.ImageIO;
+import javax.swing.ImageIcon;
+
+import com.mortennobel.imagescaling.ResampleOp;
 
 public final class Utils {
 
@@ -72,6 +79,23 @@ public final class Utils {
 			return str;
 		}
 		return str.substring(0, maxWidth - 3) + "...";
+	}
+	
+	public static List<Image> getIcons() {
+		int sizes = 64;
+		List<Image> images = new ArrayList<>(64);
+		try {
+			BufferedImage sourceImage = ImageIO.read(Utils.class.getResource("/org/paulvargas/tools/regex/regex.png"));
+			for (int idx = 0; idx < sizes; idx++) {
+				int size = 16 + (idx * 2);
+				ResampleOp resizeOp = new ResampleOp(size, size);
+				BufferedImage resizedImage = resizeOp.filter(sourceImage, null);
+				images.add(resizedImage);
+			}
+		} catch (IOException e) {
+			LOG.log(Level.SEVERE, "Error getting the icons.", e);
+		}
+		return images;
 	}
 
 }
